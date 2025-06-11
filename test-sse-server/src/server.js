@@ -1,6 +1,7 @@
 import express from "express";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
+import { z } from "zod";
 
 const app = express();
 
@@ -10,6 +11,30 @@ const server = new McpServer({
 }, {
   capabilities: {}
 });
+
+server.resource('get-user', 'user://{userID}', {}, (userID) => {
+  return {
+    name: "example-user",
+    description: `User with ID ${userID}`,
+    template: `<p>User ID: ${userID}</p>`,
+    styles: ["p { color: blue; }"]
+  };
+})
+
+server.prompt(
+  "review-code",
+  { code: z.string() },
+  ({ code }) => ({
+    messages: [{
+      role: "user",
+      content: {
+        type: "text",
+        text: `Please review this code:\n\n${code}`
+      }
+    }]
+  })
+);
+
 
 
 server.registerTool('component', {
